@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VITRIOL III: El Azufre del Alma</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,600;1,400&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { 
+            --fuego: #ff4500; 
+            --brasa: #8b0000; 
+            --oro-quemado: #d4af37; 
+            --ceniza: #1a0a0a; 
+            --papel-quemado: #fdf5e6; 
+        }
+
+        body, html { 
+            margin: 0; padding: 0; 
+            background: var(--ceniza); 
+            color: #fff; 
+            font-family: 'Cormorant Garamond', serif; 
+            overflow-x: hidden; 
+        }
+
+        #canvas { 
+            position: fixed; top: 0; left: 0; 
+            z-index: 1; opacity: 0.2; 
+            pointer-events: none; 
+        }
+
+        #interfaz { 
+            position: relative; 
+            z-index: 10; 
+            min-height: 100vh; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            padding: 40px 20px; 
+        }
+
+        .card { 
+            width: 100%; 
+            max-width: 900px; 
+            background: rgba(26, 10, 10, 0.98); 
+            border: 1px solid var(--brasa); 
+            padding: 60px; 
+            box-shadow: 0 0 120px #000; 
+            display: none; 
+            text-align: center; 
+            animation: burnIn 1.5s ease-out;
+        }
+
+        #inicio { display: block; }
+
+        .texto-fuego { 
+            font-family: 'Cinzel Decorative'; 
+            color: var(--fuego); 
+            text-shadow: 0 0 20px var(--brasa); 
+            font-size: 3.2rem; 
+            margin-bottom: 10px; 
+        }
+
+        .btn { 
+            background: transparent; 
+            border: 1px solid var(--fuego); 
+            color: var(--fuego); 
+            padding: 20px 50px; 
+            cursor: pointer; 
+            letter-spacing: 6px; 
+            transition: 0.5s; 
+            font-family: 'Cinzel'; 
+            text-transform: uppercase; 
+            font-size: 0.85rem; 
+            margin-top: 30px;
+        }
+
+        .btn:hover { 
+            background: var(--fuego); 
+            color: #000; 
+            box-shadow: 0 0 40px var(--fuego); 
+        }
+
+        .pregunta { 
+            font-size: 1.9rem; 
+            color: var(--oro-quemado); 
+            margin-bottom: 40px; 
+            font-style: italic; 
+            font-family: 'Cinzel'; 
+            line-height: 1.3;
+        }
+
+        .opcion { 
+            display: block; 
+            padding: 20px; 
+            margin: 12px 0; 
+            border: 1px solid #4a0000; 
+            cursor: pointer; 
+            transition: 0.3s; 
+            background: #0f0000; 
+            text-align: left; 
+            font-size: 1.1rem;
+            border-left: 2px solid transparent;
+        }
+
+        .opcion:hover { 
+            border-left: 8px solid var(--fuego); 
+            background: #2a0000; 
+        }
+
+        #reporte { 
+            background: var(--papel-quemado); 
+            color: #1a0a0a; 
+            border: 20px double #4a0000; 
+            padding: 60px; 
+            text-align: justify; 
+        }
+
+        .titulo-rep { 
+            font-family: 'Cinzel Decorative'; 
+            text-align: center; 
+            font-size: 2.2rem; 
+            border-bottom: 2px solid #4a0000; 
+            padding-bottom: 15px; 
+            margin-bottom: 30px;
+        }
+
+        .seccion-tratado { 
+            margin-bottom: 35px; 
+            border-left: 4px solid var(--brasa); 
+            padding-left: 20px; 
+        }
+
+        @keyframes burnIn { from { opacity: 0; filter: blur(10px); } to { opacity: 1; filter: blur(0); } }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    
+    <div id="interfaz">
+        <div id="inicio" class="card">
+            <h1 class="texto-fuego">VITRIOL III</h1>
+            <p style="letter-spacing: 4px; color: var(--oro-quemado); font-family: 'Cinzel';">FASE IGNEA - EL AZUFRE DE LA VOLUNTAD</p>
+            <div style="margin-top: 40px;">
+                <p style="font-style: italic; color: #a55; max-width: 600px; margin: 0 auto;">"El fuego que nos consume es el mismo que nos forja. No busques consuelo, busca la llama."</p>
+                <button class="btn" onclick="iniciarRitual()">Encender el Alma</button>
+            </div>
+        </div>
+
+        <div id="test" class="card">
+            <div id="barra-progreso" style="height: 2px; background: var(--fuego); width: 0%; margin-bottom: 30px; transition: 0.5s;"></div>
+            <div id="contenedor-preguntas"></div>
+        </div>
+
+        <div id="reporte" class="card">
+            <div id="resultado-final"></div>
+            <button class="btn" style="width:100%; border-color:#4a0000; color:#4a0000;" onclick="window.print()">Fijar el Azufre (Imprimir)</button>
+        </div>
+    </div>
+<script>
+        // Animación de Brasas Incandescentes (Azufre)
+        const cvs = document.getElementById('canvas');
+        const ctx = cvs.getContext('2d');
+        cvs.width = window.innerWidth;
+        cvs.height = window.innerHeight;
+
+        let particles = [];
+        for(let i=0; i<50; i++) {
+            particles.push({
+                x: Math.random() * cvs.width,
+                y: Math.random() * cvs.height,
+                s: Math.random() * 2 + 1,
+                v: Math.random() * 1 + 0.5
+            });
+        }
+
+        function animarBrasas() {
+            ctx.fillStyle = 'rgba(26, 10, 10, 0.1)';
+            ctx.fillRect(0, 0, cvs.width, cvs.height);
+            particles.forEach(p => {
+                ctx.fillStyle = '#ff4500';
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.s, 0, Math.PI*2);
+                ctx.fill();
+                p.y -= p.v;
+                if(p.y < 0) p.y = cvs.height;
+                p.x += Math.sin(Date.now()*0.001) * 0.5;
+            });
+            requestAnimationFrame(animarBrasas);
+        }
+        animarBrasas();
+
+        let actual = 0;
+        let scores = {1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0};
+
+        // Banco de Preguntas 67 a 99: Escrutinio de la Voluntad (Azufre)
+        const bancoPreguntas = [
+            { q: "67. ¿Tu rectitud es una elección libre o una cadena de hierro con la que intentas asfixiar tus deseos más oscuros?", t: 1 },
+            { q: "68. ¿Usas tu bondad para seducir y atrapar a los demás en un laberinto de deuda emocional?", t: 2 },
+            { q: "69. ¿Has sacrificado tu verdad personal tantas veces que tu vida es ahora una tumba de éxitos vacíos?", t: 3 },
+            { q: "70. ¿Te aferras a tu dolor porque tienes pánico a descubrir que, sin él, eres una persona ordinaria?", t: 4 },
+            { q: "71. ¿Tu hambre de conocimiento es en realidad un pánico a la desnudez de la ignorancia frente a otros?", t: 5 },
+            { q: "72. ¿Tu miedo al error te ha convertido en un siervo voluntario de quienes te ofrecen una falsa seguridad?", t: 6 },
+            { q: "73. ¿Tu glotonería de placeres es una anestesia para no sentir el peso de tu propia mediocridad espiritual?", t: 7 },
+            { q: "74. ¿Tu fuerza es un don o es la venganza sistemática de un niño que decidió no ser vulnerable jamás?", t: 8 },
+            { q: "75. ¿Tu paz es equilibrio real o es la muerte lenta de quien ha decidido no desear nada para no sufrir?", t: 9 },
+            { q: "76. ¿Usas la ética como un arma de destrucción masiva para aniquilar la autoestima de quienes no te obedecen?", t: 1 },
+            { q: "77. ¿Crees que eres el salvador de los demás para no admitir que eres incapaz de salvarte a ti mismo?", t: 2 },
+            { q: "78. ¿Te has convertido en un camaleón tan perfecto que ya no distingues tu propia voz del ruido externo?", t: 3 },
+            { q: "79. ¿Sientes que el mundo te debe una compensación especial por la magnitud de tu sufrimiento imaginario?", t: 4 },
+            { q: "80. ¿Atesoras tu energía como un avaro porque te aterra que la vida te consuma y te deje vacío?", t: 5 },
+            { q: "81. ¿Proyectas tu propia falta de ética en los demás para justificar tu paranoia y sospecha constante?", t: 6 },
+            { q: "82. ¿Huyes de los compromisos profundos porque te aterra descubrir que no tienes nada que dar a largo plazo?", t: 7 },
+            { q: "83. ¿Crees que el dominio sobre los otros es la única forma legítima de respeto humano?", t: 8 },
+            { q: "84. ¿Has convertido tu vida en una rutina gris para evitar la vibración del conflicto creativo?", t: 9 },
+            { q: "85. ¿Tu perfeccionismo es excelencia o es el odio profundo que sientes hacia tu propia humanidad fallida?", t: 1 },
+            { q: "86. ¿Manipulas a través de la fragilidad para obligar a los demás a cargar con tus responsabilidades?", t: 2 },
+            { q: "87. ¿Has construido un imperio de logros sobre el cadáver de tu propia autenticidad?", t: 3 },
+            { q: "88. ¿Te sientes secretamente superior a los que 'disfrutan la vida' porque tú habitas el abismo?", t: 4 },
+            { q: "89. ¿Tu aislamiento es misticismo o es el refugio de un soberbio que desprecia la mente ajena?", t: 5 },
+            { q: "90. ¿Tu lealtad es un honor o es el precio que pagas para que alguien más tome las decisiones por ti?", t: 6 },
+            { q: "91. ¿Te distraes con el futuro para no tener que enfrentar la miseria de tu presente no resuelto?", t: 7 },
+            { q: "92. ¿Tu rabia es una defensa o es el placer de sentir que finalmente tienes el control total?", t: 8 },
+            { q: "93. ¿Llamas armonía a la negligencia con la que permites que tu vida se desvanezca en la nada?", t: 9 },
+            { q: "94. ¿Te consideras un juez de la moral para no tener que ser el verdugo de tus propios vicios?", t: 1 },
+            { q: "95. ¿Das para ser visto y amado, o das para que el otro se sienta insuficiente frente a ti?", t: 2 },
+            { q: "96. ¿Sientes que si dejas de producir y brillar, te desvanecerás como un fantasma en el olvido?", t: 3 },
+            { q: "97. ¿Usas tu sensibilidad como una trampa emocional para forzar la compasión de los otros?", t: 4 },
+            { q: "98. ¿Tu sospecha de traición es en realidad el deseo oculto de ser tú quien traicione primero?", t: 6 },
+            { q: "99. ¿Estás listo para quemar al mentiroso que has alimentado con el azufre de tu propia voluntad?", t: 9 }
+        ];
+
+        function iniciarRitual() {
+            document.getElementById('inicio').style.display = 'none';
+            document.getElementById('test').style.display = 'block';
+            renderPregunta();
+        }
+
+        function renderPregunta() {
+            const p = bancoPreguntas[actual];
+            const container = document.getElementById('contenedor-preguntas');
+            
+            const opciones = [
+                { txt: "QUEMO MI MÁSCARA: ES MI VERDAD", pts: 5 },
+                { txt: "RECONOZCO EL FUEGO DE ESTA SOMBRA", pts: 3 },
+                { txt: "PERCIBO EL CALOR DE ESTE PATRÓN", pts: 1 },
+                { txt: "ESTOY FRÍO ANTE ESTA ACUSACIÓN", pts: 0 }
+            ].sort(() => Math.random() - 0.5);
+
+            document.getElementById('barra-progreso').style.width = `${(actual/33)*100}%`;
+            
+            let html = `<div class="pregunta">${p.q}</div>`;
+            opciones.forEach(o => {
+                html += `<div class="opcion" onclick="procesarRespuesta(${o.pts}, ${p.t})">${o.txt}</div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function procesarRespuesta(pts, tipo) {
+            scores[tipo] += pts;
+            actual++;
+            if(actual < 33) {
+                renderPregunta();
+            } else {
+                finalizarRitual();
+            }
+        }
+const bibliotecaSombra = {
+            1: {
+                t: "ENEATIPO 1: EL REFORMADOR ÍGNEO - LA VOLUNTAD DE CONTROL",
+                d: "Tu voluntad es un fuego contenido en una caldera a punto de estallar. Has confundido la rectitud con una armadura de castigo. Tu sombra es una ira sagrada que usas para calcinar cualquier rastro de imperfección, empezando por la tuya. Vives en una contradicción eterna: odias el desorden, pero tu orden es una forma de violencia psicológica. Eres el juez que se niega a dormir, temiendo que, si cierras los ojos, la lujuria por la vida que reprimes te consuma por completo.",
+                l: "RITUAL DE TRANSMUTACIÓN: Durante 33 días, practica la 'Rendición Consciente'. Permite que alguien más dirija tu agenda, acepta el error ajeno como una bendición de humanidad y deja de intentar corregir el mundo para no tener que corregir tu propio vacío.",
+                c: "COLISIÓN: Tu fuego choca con el agua estancada del Tipo 9, a quien quieres incendiar para que actúe, y con el Tipo 4, cuya intensidad emocional percibes como un desorden moral que debe ser rectificado."
+            },
+            2: {
+                t: "ENEATIPO 2: EL AYUDADOR POSEÍDO - LA VOLUNTAD DE SER NECESARIO",
+                d: "Tu pasión es un incendio de orgullo disfrazado de altruismo. Quieres ser la fuente de la que todos beban para poder controlar el suministro de agua. Tu ego es un banquero que invierte en las crisis ajenas para cobrar dividendos en forma de lealtad absoluta. Has asesinado tu derecho a pedir para poder manipular a través del dar. Detrás de tu calidez, se esconde la soberbia de creer que eres el único capaz de sostener el mundo de los demás.",
+                l: "RITUAL DE TRANSMUTACIÓN: Practica el 'Anonimato Radical'. Durante 33 días, haz favores sin que nadie sepa que fuiste tú. Prohíbete recibir agradecimientos. Descubre si tu bondad sobrevive al silencio o si solo era combustible para tu vanidad.",
+                c: "COLISIÓN: Chocas con la frialdad analítica del Tipo 5, que no necesita tu ayuda, y con la fuerza del Tipo 8, que ve tus hilos de manipulación y los corta con desprecio."
+            },
+            3: {
+                t: "ENEATIPO 3: EL TRIUNFADOR VACÍO - LA VOLUNTAD DE IMAGEN",
+                d: "Eres el fuego fatuo: brillas intensamente pero no tienes centro. Tu voluntad se ha dispersado en mil personajes diseñados para ganar el aplauso. Eres el impostor que ha tenido éxito en engañar a todos, excepto al niño que llora en la oscuridad de tu pecho. Has vendido tu alma por un estatus que no puedes habitar. Tu mayor tragedia es que, si el mundo dejara de mirarte, te apagarías instantáneamente por falta de una llama interna propia.",
+                l: "RITUAL DE TRANSMUTACIÓN: Practica la 'Invisibilidad Voluntaria'. Durante 33 días, evita cualquier situación donde puedas ser el centro de atención. Viste de forma ordinaria, habla poco de ti y busca el valor de ser absolutamente nadie a los ojos del mundo.",
+                c: "COLISIÓN: Colisionas con el Tipo 6 por su sospecha de tu falsedad, y con el Tipo 4, quien desprecia tu falta de profundidad y tu obsesión por la superficie reluciente."
+            },
+            4: {
+                t: "ENEATIPO 4: EL INDIVIDUALISTA TRÁGICO - LA VOLUNTAD DE DOLOR",
+                d: "Tu azufre arde en un color magenta oscuro, una melancolía que te embriaga y te aísla. Has decidido que ser feliz es ser vulgar, por lo que has hecho del sufrimiento tu marca registrada. Tu voluntad se ha fijado en la carencia: solo deseas lo que no tienes y desprecias lo que posees. Eres el arquitecto de tu propio exilio, creyendo que la incomprensión ajena es el precio de tu genialidad inexistente. Tu profundidad es solo una forma sofisticada de narcisismo.",
+                l: "RITUAL DE TRANSMUTACIÓN: Practica la 'Aceptación de lo Ordinario'. Durante 33 días, comprométete con una rutina aburrida y disciplinada. Deja de buscar lo 'especial' y aprende que la verdadera profundidad nace de la constancia, no del drama emocional.",
+                c: "COLISIÓN: Chocas con el optimismo del Tipo 7, a quien consideras un fugitivo de la verdad, y con el Tipo 1, cuya rigidez juzga tu auto-indulgencia emocional como una debilidad de carácter."
+            },
+            5: {
+                t: "ENEATIPO 5: EL OBSERVADOR ÁRIDO - LA VOLUNTAD DE DISTANCIA",
+                d: "Tu voluntad es un fuego frío, una chispa que atesoras en una habitación vacía. Te has retirado de la vida por pánico a ser consumido. Eres el avaro de la conciencia: acumulas datos para no tener que darte a ti mismo. Tu silencio no es paz, es una barricada contra la invasión ajena. Has confundido la autonomía con el aislamiento, convirtiéndote en un espectador muerto de una película que deberías estar protagonizando. Tu sombra es el desprecio intelectual hacia quienes sí se atreven a quemarse en la vida.",
+                l: "RITUAL DE TRANSMUTACIÓN: Practica la 'Exposición Generosa'. Durante 33 días, comparte tus pensamientos antes de que estén terminados. Involúcrate en proyectos grupales donde debas depender de otros. Regala tu energía sin calcular cuánto te queda en el búnker.",
+                c: "COLISIÓN: Colisionas con la invasión del Tipo 2, cuyo afecto percibes como un parásito, y con la fuerza bruta del Tipo 8, que quiere sacarte de tu escondite intelectual por la fuerza."
+            },
+            6: {
+                t: "ENEATIPO 6: EL LEAL PARANOICO - LA VOLUNTAD DE SEGURIDAD",
+                d: "Tu voluntad es una llama que tiembla ante cualquier soplo de duda. Has entregado tu poder a sistemas, dogmas y figuras de autoridad para no tener que enfrentar la soledad de tu propia libertad. Tu sombra es la sospecha: proyectas tus propias intenciones hostiles en los demás para justificar tu pánico. Eres el centinela de un castillo vacío, vigilando amenazas que tú mismo has inventado para sentir que tu vida tiene un propósito preventivo. Tu lealtad es en realidad miedo a la soledad.",
+                l: "RITUAL DE TRANSMUTACIÓN: Practica la 'Autoconfianza Ciega'. Durante 33 días, toma decisiones sin consultar a nadie ni buscar validación. Si te equivocas, abraza el error como tu única posesión real. Tú eres tu propia ley.",
+                c: "COLISIÓN: Chocas con la falsedad del Tipo 3, a quien no dejas de vigilar, y con el Tipo 9, cuya inacción te desespera porque sientes que te deja desprotegido ante el peligro."
+            },
+            7: {
+                t: "ENEATIPO 7: EL ENTUSIASTA FUGITIVO - LA VOLUNTAD DE EVASIÓN",
+                d: "Tu fuego es un incendio forestal que se mueve rápido para no ver las cenizas que deja atrás. Eres el glotón de las posibilidades, el eterno buscador de 'lo próximo'. Tu voluntad es una huida frenética del dolor que te habita. Has confundido la libertad con la falta de compromiso, y la alegría con la anestesia. Eres incapaz de profundizar porque el centro de las cosas es el silencio, y en el silencio podrías escuchar tu propio vacío. Tu vida es un carrusel de distracciones que te aleja de tu propia alma.",
+                l: "RITUAL DE TRANSMUTACIÓN: Practica el 'Compromiso Monástico'. Durante 33 días, elige una sola tarea o relación y profundiza en ella sin buscar planes alternativos. Quédate en el aburrimiento hasta que este se convierta en una puerta.",
+                c: "COLISIÓN: Colisionas con el rigor del Tipo 1, que quiere encadenar tu vuelo, y con el Tipo 4, cuyo pesimismo percibes como un veneno para tu entusiasmo forzado."
+            },
+            8: {
+                t: "ENEATIPO 8: EL TIRANO VENGATIVO - LA VOLUNTAD DE PODER",
+                d: "Tu voluntad es un volcán de lava que quiere cubrirlo todo para no ser dominado. Eres el castigo preventivo personificado. Has decidido que el mundo es una guerra y tú eres el único soldado digno. Tu sombra es la lujuria por la intensidad: necesitas sentir el límite de las cosas para saber que estás vivo. Tu fuerza es en realidad la cicatriz de una gran herida de vulnerabilidad que has jurado no volver a mostrar jamás. Confundes el miedo que provocas con el respeto que anhelas.",
+                l: "RITUAL DE TRANSMUTACIÓN: Practica la 'Vulnerabilidad Deliberada'. Durante 33 días, confiesa una debilidad real a alguien cada día. Deja que otros ganen las discusiones. Aprende que la verdadera fuerza es la capacidad de ser herido sin devolver el golpe.",
+                c: "COLISIÓN: Chocas con el Tipo 2 por sus hilos de seda que intentan amarrarte, y con el Tipo 5, cuya pasividad intelectual percibes como una resistencia que debes aplastar."
+            },
+            9: {
+                t: "ENEATIPO 9: EL PACIFICADOR ANESTESIADO - LA VOLUNTAD DE INDIFERENCIA",
+                d: "Tu fuego se ha convertido en humo negro que nubla tu propia existencia. Tu voluntad es la de no tener voluntad. Has decidido que para no perder la conexión, debes dejar de existir. Tu paz es la inercia de la piedra. Tu sombra es una ira pasiva-agresiva que boicotea la vida a través de la inacción. Te has narcotizado con lo irrelevante para no tener que enfrentar la responsabilidad de ser tú mismo. Eres el fantasma que habita su cuerpo por pura costumbre.",
+                l: "RITUAL DE TRANSMUTACIÓN: Practica la 'Afirmación Hostil'. Durante 33 días, di 'no' a cada petición que no desees cumplir. Expresa tu opinión aunque cause conflicto. Ocupa tu lugar en el espacio de forma ruidosa y descubre que el mundo no se acaba por tu presencia.",
+                c: "COLISIÓN: Colisionas con el Tipo 1 por sus juicios que te obligan a despertarte, y con el Tipo 8, cuya expansión violenta te obliga a tomar una posición que te aterra."
+            }
+        };
+function finalizarRitual() {
+            document.getElementById('test').style.display = 'none';
+            const reporte = document.getElementById('reporte');
+            reporte.style.display = 'block';
+
+            // Identificación de la Sombra Volitiva dominante
+            const top = Object.keys(scores).reduce((a, b) => scores[a] > scores[b] ? a : b);
+            const data = bibliotecaSombra[top];
+            const folio = "SF-" + Math.floor(Math.random() * 900000 + 100000);
+
+            // Galería Multimedia de la Fase Ígnea
+            const imagenes = {
+                1: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800",
+                2: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?q=80&w=800",
+                3: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?q=80&w=800",
+                4: "https://images.unsplash.com/photo-1502481851512-e9e2529bbbf9?q=80&w=800",
+                5: "https://images.unsplash.com/photo-1520034475321-cbe63696469a?q=80&w=800",
+                6: "https://images.unsplash.com/photo-1509248961158-e54f6934749c?q=80&w=800",
+                7: "https://images.unsplash.com/photo-1496337589254-7e19d01ced44?q=80&w=800",
+                8: "https://images.unsplash.com/photo-1536566482680-fca31930a0bd?q=80&w=800",
+                9: "https://images.unsplash.com/photo-1490810277975-e64342ceecf0?q=80&w=800"
+            };
+
+            document.getElementById('resultado-final').innerHTML = `
+                <div style="text-align:right; font-family:'Cinzel'; font-size:0.8rem; margin-bottom:10px; color:var(--fuego);">
+                    FOLIO DE VOLUNTAD: ${folio} | FASE: SULFUR (AZUFRE)
+                </div>
+                <h1 class="titulo-rep">${data.t}</h1>
+                
+                <div style="width:100%; height:320px; background: url('${imagenes[top]}') center/cover; margin-bottom:30px; filter: saturate(1.5) contrast(1.3) brightness(0.7); border: 2px solid var(--brasa); box-shadow: 0 0 20px rgba(255,69,0,0.3);"></div>
+
+                <div class="seccion-tratado">
+                    <h3>Exégesis del Azufre y la Voluntad</h3>
+                    <p style="line-height:1.7;">${data.d}</p>
+                </div>
+
+                <div class="seccion-tratado">
+                    <h3>Colisiones y Fugas de Energía</h3>
+                    <p style="line-height:1.7;">${data.c}</p>
+                </div>
+
+                <div class="seccion-tratado" style="background: rgba(255, 69, 0, 0.05); padding: 25px; border: 1px dashed var(--fuego);">
+                    <h3>Ritual de Calcinación (33 DÍAS)</h3>
+                    <p style="font-style:italic; line-height:1.7;">${data.l}</p>
+                </div>
+
+                <div style="margin-top:50px; text-align:center; opacity:0.8; font-family:'Cinzel';">
+                    <p>"Igne Natura Renovatur Integra"</p>
+                    <p style="font-size:0.75rem; letter-spacing:4px; color:var(--fuego);">EL FUEGO SOLO QUEMA LO QUE NO ES VERDADERO. LO QUE QUEDA ES TU ESENCIA.</p>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
